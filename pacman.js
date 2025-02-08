@@ -466,7 +466,7 @@ Pacman.User = function (game, map) {
         block = map.block(nextWhole);        
         
         if ((isMidSquare(position.y) || isMidSquare(position.x)) &&
-            block === Pacman.BISCUIT || block === Pacman.PILL) {
+            block === Pacman.BISCUIT || block === Pacman.PILL || block === Pacman.PILLs) {
             
             map.setBlock(nextWhole, Pacman.EMPTY);           
             addScore((block === Pacman.BISCUIT) ? 10 : 50);
@@ -477,6 +477,10 @@ Pacman.User = function (game, map) {
             }
             
             if (block === Pacman.PILL) { 
+                game.eatenPill();
+            }
+
+            if (block === Pacman.PILLs) { 
                 game.eatenPill();
             }
         }   
@@ -588,7 +592,8 @@ Pacman.Map = function (size) {
         var peice = map[pos.y][pos.x];
         return peice === Pacman.EMPTY || 
             peice === Pacman.BISCUIT ||
-            peice === Pacman.PILL;
+            peice === Pacman.PILL ||
+            peice === Pacman.PILLs;
     }
     
     function drawWall(ctx) {
@@ -636,7 +641,7 @@ Pacman.Map = function (size) {
         map[pos.y][pos.x] = type;
     };
 
-    function drawPills(ctx) { 
+    function drawPill(ctx) { 
 
         if (++pillSize > 30) {
             pillSize = 0;
@@ -664,47 +669,35 @@ Pacman.Map = function (size) {
 	    }
     };
 
-    // function drawPills(ctx) { 
+    function drawPills(ctx) { 
 
-    //     if (++pillSize > 30) {
-    //         pillSize = 0;
-    //     }
+        if (++pillSize > 30) {
+            pillSize = 0;
+        }
+        
+        for (i = 0; i < height; i += 1) {
+		    for (j = 0; j < width; j += 1) {
+                if (map[i][j] === Pacman.PILLs) {
+                    ctx.beginPath();
+
+                    ctx.fillStyle = "#000";
+		            ctx.fillRect((j * blockSize), (i * blockSize), 
+                                 blockSize, blockSize);
+
+                    ctx.fillStyle = "#FFFF00";
+                    ctx.arc((j * blockSize) + blockSize / 2,
+                            (i * blockSize) + blockSize / 2,
+                            Math.abs(5 - (pillSize/3)), 
+                            0, 
+                            Math.PI * 2, false); 
+                    ctx.fill();
+                    ctx.closePath();
+                }
+		    }
+	    }
+    };
+
     
-    //     // Mảng chứa 7 sắc cầu vồng
-    //     const rainbowColors = [
-    //         "#FF0000", // Đỏ
-    //         "#FF7F00", // Cam
-    //         "#FFFF00", // Vàng
-    //         "#00FF00", // Lục
-    //         "#0000FF", // Lam
-    //         "#4B0082", // Chàm
-    //         "#9400D3"  // Tím
-    //     ];
-    
-    //     for (let i = 0; i < height; i += 1) {
-    //         for (let j = 0; j < width; j += 1) {
-    //             if (map[i][j] === Pacman.PILL) {
-    //                 ctx.beginPath();
-    
-    //                 ctx.fillStyle = "#000";
-    //                 ctx.fillRect((j * blockSize), (i * blockSize), blockSize, blockSize);
-    
-    //                 // Chọn màu cầu vồng theo pillSize
-    //                 const rainbowIndex = Math.floor(pillSize / 5) % rainbowColors.length;
-    //                 const pillColor = rainbowColors[rainbowIndex];
-    
-    //                 ctx.fillStyle = pillColor; // Sử dụng màu cầu vồng
-    //                 ctx.arc((j * blockSize) + blockSize / 2,
-    //                         (i * blockSize) + blockSize / 2,
-    //                         Math.abs(5 - (pillSize / 3)), 
-    //                         0, 
-    //                         Math.PI * 2, false); 
-    //                 ctx.fill();
-    //                 ctx.closePath();
-    //             }
-    //         }
-    //     }
-    // };
     
     
     function draw(ctx) {
@@ -728,6 +721,10 @@ Pacman.Map = function (size) {
         var layout = map[y][x];
 
         if (layout === Pacman.PILL) {
+            return;
+        }
+
+        if (layout === Pacman.PILLs) {
             return;
         }
 
@@ -755,6 +752,7 @@ Pacman.Map = function (size) {
     return {
         "draw"         : draw,
         "drawBlock"    : drawBlock,
+        "drawPill"    : drawPill,
         "drawPills"    : drawPills,
         "block"        : block,
         "setBlock"     : setBlock,
@@ -1041,7 +1039,9 @@ var PACMAN = (function () {
             ++tick;
         }
 
+        map.drawPill(ctx);
         map.drawPills(ctx);
+
 
         if (state === PLAYING) {
             mainDraw();
@@ -1202,10 +1202,11 @@ Pacman.BISCUIT = 1;
 Pacman.EMPTY   = 2;
 Pacman.BLOCK   = 3;
 Pacman.PILL    = 4;
+Pacman.PILLs   = 5;
 
 Pacman.MAP = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-	[0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+	[0, 1, 1, 1, 5, 1, 1, 1, 1, 0, 1, 1, 1, 1, 5, 1, 1, 1, 0],
 	[0, 4, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 4, 0],
 	[0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
 	[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
@@ -1224,7 +1225,7 @@ Pacman.MAP = [
 	[0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0],
 	[0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0],
 	[0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-	[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+	[0, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 0],
 	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
 
